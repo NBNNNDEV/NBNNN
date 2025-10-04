@@ -105,7 +105,7 @@ const Index = () => {
         </button>
         <h2 className="text-center">
         <a
-          href="https://your-token-link.com" // ← replace this with the real URL
+          href="https://pump.fun/coin/EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA" // ← replace this with the real URL
           target="_blank"
           rel="noopener noreferrer"
           className="text-1xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent cursor-pointer transition-opacity hover:opacity-80"
