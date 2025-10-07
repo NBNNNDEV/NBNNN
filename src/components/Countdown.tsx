@@ -29,7 +29,6 @@ function calculateTimeLeft(targetDate: Date): TimeLeft {
 }
 
 export const Countdown = () => {
-  // Countdown until November 2025 (start of month)
   const target = useMemo(() => new Date("2025-11-01T00:00:00Z"), []);
   const [timeLeft, setTimeLeft] = useState<TimeLeft>(() => calculateTimeLeft(target));
 
@@ -48,12 +47,13 @@ export const Countdown = () => {
     timeLeft.seconds === 0;
 
   return (
-    <div className="w-full max-w-3xl mx-auto text-center space-y-4">
+    <div className="w-full max-w-3xl mx-auto text-center space-y-6 px-4">
       <h2 className="text-3xl font-bold">Countdown to November 2025</h2>
+
       {done ? (
-        <p className="text-xl">It\'s November! Brace yourself.</p>
+        <p className="text-xl">It's November! Brace yourself.</p>
       ) : (
-        <div className="grid grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 w-full">
           {[
             { label: "Months", value: timeLeft.months },
             { label: "Days", value: timeLeft.days },
@@ -61,9 +61,12 @@ export const Countdown = () => {
             { label: "Minutes", value: timeLeft.minutes },
             { label: "Seconds", value: timeLeft.seconds },
           ].map((item) => (
-            <div key={item.label} className="rounded-lg border p-4">
-              <div className="text-3xl font-semibold">{item.value.toString().padStart(2, "0")}</div>
-              <div className="text-sm text-muted-foreground">{item.label}</div>
+            <div
+              key={item.label}
+              className="flex flex-col items-center justify-center w-full rounded-lg border p-4 text-center"
+            >
+              <div className="w-full text-4xl font-semibold">{item.value.toString().padStart(2, "0")}</div>
+              <div className="w-full text-sm text-muted-foreground">{item.label}</div>
             </div>
           ))}
         </div>
@@ -73,5 +76,3 @@ export const Countdown = () => {
 };
 
 export default Countdown;
-
-

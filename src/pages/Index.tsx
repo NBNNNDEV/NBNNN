@@ -106,18 +106,24 @@ const Index = () => {
         </p>
 
       </div>
-      <div>
-        <button
-          onClick={() => {
-            navigator.clipboard.writeText("EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA");
-            toast.success("Copied to clipboard!");
-          }}
-          className="text-center text-2xl font-bold"
-        >
-          CA: <br />
-          EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA
-        </button>
-      </div>
+      <div className="w-full px-4 sm:px-6 md:px-8">
+  <button
+    onClick={() => {
+      navigator.clipboard.writeText(
+        "EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA"
+      );
+      toast.success("Copied to clipboard!");
+    }}
+    className="w-full py-3 rounded-lg bg-muted hover:bg-muted/80 text-center text-2xl font-bold border border-border transition-all"
+  >
+    <div className="flex flex-col items-center justify-center w-full space-y-1">
+      <span className="block">CA:</span>
+      <span className="block w-full px-4 break-all font-mono text-base">
+        EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA
+      </span>
+    </div>
+  </button>
+</div>
 
       <section id="countdown" className="w-full">
         <Countdown />
