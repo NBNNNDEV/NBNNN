@@ -24,7 +24,7 @@ export const ClickCounter = ({ count }: ClickCounterProps) => {
       </h2>
       <div
         className={cn(
-          "text-8xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent transition-all",
+          "text-8xl font-bold bg-gradient-to-r",
           isAnimating && "animate-count-up"
         )}
       >

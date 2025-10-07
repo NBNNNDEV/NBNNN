@@ -2,122 +2,158 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { ClickButton } from "@/components/ClickButton";
 import { ClickCounter } from "@/components/ClickCounter";
+import { useSolanaWallet } from "@/hooks/use-solana-wallet";
+import { getTotal, subscribeTotal } from "@/integrations/api/nut";
+import { Countdown } from "@/components/Countdown";
+import { SocialLinks } from "@/components/SocialLinks";
+import { Leaderboard } from "@/components/Leaderboard";
+import { NutStreakChallenge } from "@/components/NutStreakChallenge";
+import { Team } from "@/components/Team";
+import { FAQ } from "@/components/FAQ";
+import { WallOfShame } from "@/components/WallOfShame";
+import { Button } from "@/components/ui/button";
+import { TopNav } from "@/components/TopNav";
 import { toast } from "sonner";
 
 const Index = () => {
   const [clickCount, setClickCount] = useState(0);
   const [isClicking, setIsClicking] = useState(false);
   const [clickId, setClickId] = useState<string | null>(null);
+  const { publicKey } = useSolanaWallet();
+  const getOrCreateUserId = () => {
+    const KEY = "nbnnn_user_id";
+    let id = localStorage.getItem(KEY);
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem(KEY, id);
+    }
+    return id;
+  };
 
-  // Fetch initial count
+  // Fetch initial total nuts (sum of user totals) via API
   useEffect(() => {
     const fetchCount = async () => {
-      const { data, error } = await supabase
-        .from("global_clicks")
-        .select("id, count")
-        .single();
-
-      if (error) {
-        console.error("Error fetching count:", error);
+      try {
+        const { total } = await getTotal();
+        setClickCount(total ?? 0);
+      } catch (e) {
+        console.error("Error fetching total:", e);
         toast.error("Failed to load click count");
-        return;
-      }
-
-      if (data) {
-        setClickCount(data.count);
-        setClickId(data.id);
       }
     };
 
     fetchCount();
   }, []);
 
-  // Subscribe to realtime updates
+  // Poll totals periodically (Render REST)
   useEffect(() => {
-    const channel = supabase
-      .channel("global_clicks_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "UPDATE",
-          schema: "public",
-          table: "global_clicks",
-        },
-        (payload) => {
-          setClickCount(payload.new.count);
-        }
-      )
-      .subscribe();
+    // SSE subscription
+    const unsub = subscribeTotal((n) => setClickCount(n));
+    // Fallback initial fetch
+    (async () => {
+      try {
+        const { total } = await getTotal();
 
+        setClickCount(total ?? 0);
+      } catch {}
+    })();
     return () => {
-      supabase.removeChannel(channel);
+      unsub();
     };
   }, []);
 
   const handleClick = async () => {
-    if (!clickId) return;
-
     setIsClicking(true);
     setTimeout(() => setIsClicking(false), 400);
 
-    // Optimistically update UI
+    // Optimistically update UI (sum will sync via realtime anyway)
     setClickCount((prev) => prev + 1);
 
-    // Update database
-    const { error } = await supabase
-      .from("global_clicks")
-      .update({ count: clickCount + 1 })
-      .eq("id", clickId);
-
-    if (error) {
-      console.error("Error updating count:", error);
-      toast.error("Failed to register click");
-      // Revert optimistic update
-      setClickCount((prev) => prev - 1);
+    // If it's November, log to wall_of_shame once per season using anonymous local id
+    const now = new Date();
+    const isNovember = now.getMonth() === 10; // 0-based: 10 => November
+    if (isNovember) {
+      const userId = getOrCreateUserId();
+      const seasonYear = now.getFullYear();
+      // POST to Render API
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_BASE_URL || ""}/shame`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: userId, season_year: seasonYear }),
+        });
+        if (!res.ok) throw new Error("shame failed");
+      } catch (e) {
+        console.error(e);
+      }
     }
   };
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center gap-16 p-8 ">
+      <TopNav />
       <div className="text-center space-y-4">
-        <h1 className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          NutBeforeNNN
+        
+        <h1 className="text-5xl font-bold">
+          NutBeforeNNN $NBNNN
         </h1>
-        <h3 className="text-5xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-          $NBNNN
-        </h3>
+
         <p className="text-xl text-muted-foreground max-w-2xl">
           Click Every time you Nut Before No Nut November
         </p>
         <p className="text-xl text-muted-foreground max-w-2xl">
-          Nut with your friends too (We don't judge you)
+          Nut with your friends too (We don't judge you but we'll shame you if you fail NNN)
         </p>
+
       </div>
       <div>
         <button
           onClick={() => {
-            navigator.clipboard.writeText("NOT YET");
+            navigator.clipboard.writeText("EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA");
             toast.success("Copied to clipboard!");
           }}
-          className="text-center text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent cursor-pointer transition-opacity hover:opacity-80 focus:outline-none"
+          className="text-center text-2xl font-bold"
         >
-          CA: NOT YET
+          CA: <br />
+          EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA
         </button>
-        <h2 className="text-center">
-        <a
-          href="https://pump.fun/coin/EGh2tNSjZD2CugKKXhQDVvouNE6DTAJaMWkykReRZyPA" // ← replace this with the real URL
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-1xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent cursor-pointer transition-opacity hover:opacity-80"
-        >
-          Buy it Here
-        </a>
-        </h2>
       </div>
+
+      <section id="countdown" className="w-full">
+        <Countdown />
+      </section>
 
       <ClickCounter count={clickCount} />
 
       <ClickButton onClick={handleClick} isClicking={isClicking} />
+
+
+      {/* New Sections */}
+
+
+      <section id="social" className="w-full">
+        <SocialLinks />
+      </section>
+
+      <section id="leaderboard" className="w-full">
+        <Leaderboard />
+      </section>
+
+      <section id="challenge" className="w-full">
+        <NutStreakChallenge />
+      </section>
+
+      <section id="shame" className="w-full">
+        <WallOfShame />
+      </section>
+
+      <section id="team" className="w-full">
+        <Team />
+      </section>
+
+      <section id="faq" className="w-full">
+        <FAQ />
+      </section>
     </div>
   );
 };
