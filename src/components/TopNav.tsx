@@ -4,8 +4,8 @@ import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { Menu, X } from "lucide-react";
+import { useWalletVerification } from "@/hooks/useWalletVerification";
 
-const MANUAL_CONNECT_KEY = "wallet_manual_connect";
 
 export const TopNav = () => {
   const { connected, publicKey, disconnect } = useWallet();
@@ -16,6 +16,8 @@ export const TopNav = () => {
     : "";
   const [isConnecting, setIsConnecting] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const { verifyWallet } = useWalletVerification();
+  const IS_VERIFIED = sessionStorage.getItem("IS_VERIFIED");
 
   useEffect(() => {
     if (!connected) {
@@ -23,9 +25,16 @@ export const TopNav = () => {
     }
   }, [connected, disconnect, isConnecting]);
 
+  useEffect(() => {
+    if (connected && publicKey && IS_VERIFIED == "false") {
+      // Immediately verify wallet
+      verifyWallet();
+    }
+  }, [connected, publicKey, verifyWallet, IS_VERIFIED]);
+
   const handleConnect = () => {
     setIsConnecting(true);
-    sessionStorage.setItem(MANUAL_CONNECT_KEY, "true");
+    sessionStorage.setItem("IS_VERIFIED", "false")
     setTimeout(() => setIsConnecting(false), 1000);
   };
 
@@ -82,7 +91,7 @@ export const TopNav = () => {
                     buttonVariants({ variant: "outline", size: "sm" })
                   )}
                   onClick={() => {
-                    sessionStorage.removeItem(MANUAL_CONNECT_KEY);
+                    sessionStorage.removeItem("IS_VERIFIED");
                     disconnect();
                   }}
                 >
@@ -124,6 +133,7 @@ export const TopNav = () => {
                 {i.label}
               </a>
             ))}
+            
 
             <div className="mt-2 border-t w-full pt-2">
               {connected ? (
@@ -132,7 +142,7 @@ export const TopNav = () => {
                     buttonVariants({ variant: "outline", size: "sm" })
                   )}
                   onClick={() => {
-                    sessionStorage.removeItem(MANUAL_CONNECT_KEY);
+                    sessionStorage.removeItem("IS_VERIFIED");
                     disconnect();
                     setMenuOpen(false);
                   }}
